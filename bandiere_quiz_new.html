@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌍 Quiz Bandiere del Mondo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #1a1a2e;
+    --sky2: #16213e;
+    --card: #0f3460;
+    --accent: #e94560;
+    --gold: #ffd700;
+    --mint: #00d4aa;
+    --soft: #a8b2d8;
+    --white: #f0f4ff;
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 30%, rgba(233,69,96,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,212,170,0.10) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .app { position: relative; z-index: 1; width: 100%; max-width: 560px; }
+
+  /* ── SCHERMATA TITOLO ── */
+  .screen { display: none; flex-direction: column; align-items: center; gap: 24px; }
+  .screen.active { display: flex; }
+
+  .logo { font-family: 'Pacifico', cursive; font-size: 2.6rem; color: var(--gold);
+    text-shadow: 0 4px 20px rgba(255,215,0,0.4); text-align: center; line-height: 1.2; }
+  .subtitle { color: var(--soft); font-size: 1.1rem; text-align: center; }
+
+  .level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; width: 100%; }
+  .level-btn {
+    background: linear-gradient(145deg, var(--card), #0a2647);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    padding: 22px 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    color: var(--white);
+  }
+  .level-btn:hover { border-color: var(--accent); transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(233,69,96,0.25); }
+  .level-btn .lv-num { font-size: 2rem; font-weight: 900; color: var(--gold); }
+  .level-btn .lv-title { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.5px; }
+  .level-btn .lv-desc { font-size: 0.72rem; color: var(--soft); text-align: center; line-height: 1.4; }
+  .level-btn.lv1:hover { border-color: #4fc3f7; box-shadow: 0 12px 30px rgba(79,195,247,0.25); }
+  .level-btn.lv2:hover { border-color: var(--mint); box-shadow: 0 12px 30px rgba(0,212,170,0.25); }
+  .level-btn.lv3:hover { border-color: var(--accent); box-shadow: 0 12px 30px rgba(233,69,96,0.25); }
+
+  /* ── QUIZ ── */
+  .quiz-header {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(15,52,96,0.7); border-radius: var(--radius); padding: 12px 20px;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08);
+  }
+  .q-counter { font-size: 0.9rem; color: var(--soft); }
+  .q-counter span { color: var(--white); font-weight: 800; font-size: 1.1rem; }
+  .stars-row { display: flex; gap: 4px; }
+  .star { font-size: 1.2rem; transition: all 0.3s; }
+  .star.earned { filter: drop-shadow(0 0 6px var(--gold)); }
+  .star.missed { opacity: 0.25; filter: grayscale(1); }
+
+  .progress-bar {
+    width: 100%; height: 8px;
+    background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--mint), var(--gold));
+    border-radius: 99px; transition: width 0.5s ease;
+  }
+
+  .flag-card {
+    background: linear-gradient(145deg, var(--card), #0a2647);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius); padding: 32px 24px;
+    width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px;
+    position: relative; overflow: hidden;
+  }
+  .flag-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%);
+  }
+  .flag-wrapper {
+    width: 260px; height: 170px;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,255,255,0.12);
+    transition: transform 0.4s;
+  }
+  .flag-wrapper:hover { transform: scale(1.03); }
+  .flag-wrapper svg { width: 100%; height: 100%; display: block; }
+
+  .hint-text { color: var(--soft); font-size: 0.9rem; text-align: center; }
+  .continent-badge {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 99px; padding: 4px 14px; font-size: 0.78rem; color: var(--soft);
+  }
+
+  .reveal-btn {
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    border: none; border-radius: var(--radius); padding: 18px 44px;
+    font-family: 'Nunito', sans-serif; font-size: 1.15rem; font-weight: 800;
+    color: white; cursor: pointer; width: 100%;
+    transition: all 0.2s; letter-spacing: 0.5px;
+    box-shadow: 0 8px 24px rgba(233,69,96,0.4);
+  }
+  .reveal-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(233,69,96,0.55); }
+  .reveal-btn:active { transform: translateY(0); }
+
+  /* RISPOSTA */
+  .answer-panel {
+    background: rgba(15,52,96,0.9); border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,0.1); padding: 24px;
+    width: 100%; display: none; flex-direction: column; align-items: center; gap: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .answer-panel.visible { display: flex; }
+  .country-name { font-size: 1.9rem; font-weight: 900; color: var(--white); text-align: center; }
+  .country-extra { color: var(--soft); font-size: 0.88rem; text-align: center; }
+
+  .self-judge { display: flex; gap: 14px; width: 100%; }
+  .judge-btn {
+    flex: 1; border: none; border-radius: var(--radius-sm); padding: 16px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .judge-ok {
+    background: linear-gradient(135deg, #00c853, #00a040);
+    color: white; box-shadow: 0 6px 20px rgba(0,200,83,0.35);
+  }
+  .judge-ok:hover { box-shadow: 0 10px 28px rgba(0,200,83,0.5); transform: translateY(-2px); }
+  .judge-no {
+    background: linear-gradient(135deg, #f44336, #c62828);
+    color: white; box-shadow: 0 6px 20px rgba(244,67,54,0.35);
+  }
+  .judge-no:hover { box-shadow: 0 10px 28px rgba(244,67,54,0.5); transform: translateY(-2px); }
+
+  /* FEEDBACK OVERLAY */
+  .feedback-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  }
+  .feedback-overlay.show { opacity: 1; }
+  .feedback-emoji { font-size: 7rem; animation: popIn 0.4s ease; }
+  .feedback-msg { font-size: 1.6rem; font-weight: 900; margin-top: 12px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  @keyframes popIn { 0%{transform:scale(0) rotate(-15deg)} 70%{transform:scale(1.15) rotate(5deg)} 100%{transform:scale(1) rotate(0)} }
+
+  /* PARTICELLE STELLE */
+  .particle { position: fixed; pointer-events: none; z-index: 99; font-size: 1.4rem;
+    animation: floatUp 1.2s ease-out forwards; }
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(-120px) rotate(360deg); }
+  }
+
+  /* ── RIEPILOGO ── */
+  .summary-card {
+    background: linear-gradient(145deg, var(--card), #0a2647);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius); padding: 36px 28px;
+    width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .summary-title { font-family: 'Pacifico', cursive; font-size: 1.8rem; color: var(--gold); text-align: center; }
+  .score-big { font-size: 4rem; font-weight: 900; color: var(--white); }
+  .score-big span { color: var(--gold); }
+  .score-details { display: flex; gap: 28px; }
+  .score-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .score-item .si-num { font-size: 2rem; font-weight: 900; }
+  .score-item .si-label { font-size: 0.78rem; color: var(--soft); }
+  .score-item.ok .si-num { color: #4caf50; }
+  .score-item.ko .si-num { color: #f44336; }
+  .stars-final { display: flex; gap: 6px; font-size: 1.8rem; flex-wrap: wrap; justify-content: center; }
+  .encourage { background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2);
+    border-radius: var(--radius-sm); padding: 14px 20px;
+    color: #ffe082; font-size: 1rem; font-weight: 700; text-align: center; line-height: 1.5; }
+
+  .home-btn {
+    background: linear-gradient(135deg, var(--mint), #009f7f);
+    border: none; border-radius: var(--radius); padding: 18px 44px;
+    font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 800;
+    color: white; cursor: pointer; width: 100%;
+    transition: all 0.2s; box-shadow: 0 8px 24px rgba(0,212,170,0.35);
+  }
+  .home-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,212,170,0.5); }
+
+  /* LIVELLO BADGE */
+  .level-badge {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 99px; padding: 4px 16px; font-size: 0.82rem;
+    font-weight: 700; color: var(--soft);
+  }
+
+  @media (max-width: 420px) {
+    .logo { font-size: 2rem; }
+    .level-grid { grid-template-columns: 1fr; }
+    .flag-wrapper { width: 220px; height: 143px; }
+    .country-name { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SCHERMATA HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="logo">🌍 Quiz Bandiere</div>
+    <p class="subtitle">Quante bandiere conosci?<br>Scegli il livello e inizia!</p>
+    <div class="level-grid">
+      <button class="level-btn lv1" onclick="startGame(1)">
+        <span class="lv-num">1</span>
+        <span class="lv-title">⭐ FACILE</span>
+        <span class="lv-desc">Paesi grandi e vicini all'Italia</span>
+      </button>
+      <button class="level-btn lv2" onclick="startGame(2)">
+        <span class="lv-num">2</span>
+        <span class="lv-title">⭐⭐ MEDIO</span>
+        <span class="lv-desc">Paesi un po' meno conosciuti</span>
+      </button>
+      <button class="level-btn lv3" onclick="startGame(3)">
+        <span class="lv-num">3</span>
+        <span class="lv-title">⭐⭐⭐ DIFFICILE</span>
+        <span class="lv-desc">Paesi rari e sfidanti!</span>
+      </button>
+    </div>
+    <p style="color:var(--soft);font-size:0.8rem;text-align:center;">10 domande per livello · Auto-valutazione · Suoni · Stelle · 🔊</p>
+  </div>
+
+  <!-- SCHERMATA QUIZ -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-header">
+      <div>
+        <div class="q-counter">Domanda <span id="q-num">1</span> / 10</div>
+        <div class="level-badge" id="q-level-badge">Livello 1</div>
+      </div>
+      <div class="stars-row" id="stars-row"></div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+    <div class="flag-card">
+      <div class="continent-badge" id="continent-badge">Europa</div>
+      <div class="flag-wrapper" id="flag-wrapper"></div>
+      <p class="hint-text">👀 Guarda bene la bandiera...<br>Poi clicca il bottone quando sei pronto!</p>
+    </div>
+
+    <button class="reveal-btn" id="reveal-btn" onclick="revealAnswer()">
+      🤔 Conosco la risposta! Mostrami il paese
+    </button>
+
+    <div class="answer-panel" id="answer-panel">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+        <div class="country-name" id="country-name"></div>
+        <button onclick="speakCountry(state.current)" title="Riascolta il nome"
+          style="background:rgba(255,255,255,0.12);border:none;border-radius:50%;width:44px;height:44px;
+          font-size:1.4rem;cursor:pointer;transition:all 0.2s;flex-shrink:0;"
+          onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.12)'">🔊</button>
+      </div>
+      <div class="country-extra" id="country-extra"></div>
+      <div class="self-judge">
+        <button class="judge-btn judge-ok" onclick="judge(true)">✅ L'avevo indovinata!</button>
+        <button class="judge-btn judge-no" onclick="judge(false)">❌ Non lo sapevo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHERMATA RIEPILOGO -->
+  <div class="screen" id="screen-summary">
+    <div class="summary-card">
+      <div class="summary-title">Quiz Completato! 🎉</div>
+      <div class="score-big"><span id="sum-correct">0</span>/10</div>
+      <div class="score-details">
+        <div class="score-item ok">
+          <span class="si-num" id="sum-ok">0</span>
+          <span class="si-label">✅ Corrette</span>
+        </div>
+        <div class="score-item ko">
+          <span class="si-num" id="sum-ko">0</span>
+          <span class="si-label">❌ Sbagliate</span>
+        </div>
+      </div>
+      <div class="stars-final" id="stars-final"></div>
+      <div class="encourage" id="encourage-msg"></div>
+    </div>
+    <button class="home-btn" onclick="goHome()">🏠 Torna alla scelta del livello</button>
+  </div>
+
+</div>
+
+<!-- FEEDBACK OVERLAY -->
+<div class="feedback-overlay" id="feedback-overlay">
+  <div class="feedback-emoji" id="feedback-emoji"></div>
+  <div class="feedback-msg" id="feedback-msg"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATI BANDIERE – SVG inline per tutti i paesi
+// ════════════════════════════════════════════════════════
+
+const FLAGS = {
+
+  // ── LIVELLO 1 ── Facili/vicine all'Italia
+  "Italia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#009246"/>
+      <rect x="100" width="100" height="200" fill="#ffffff"/>
+      <rect x="200" width="100" height="200" fill="#ce2b37"/>
+    </svg>`
+  },
+  "Francia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#002395"/>
+      <rect x="100" width="100" height="200" fill="#ffffff"/>
+      <rect x="200" width="100" height="200" fill="#ed2939"/>
+    </svg>`
+  },
+  "Germania": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300">
+      <rect width="500" height="100" fill="#000000"/>
+      <rect y="100" width="500" height="100" fill="#dd0000"/>
+      <rect y="200" width="500" height="100" fill="#ffce00"/>
+    </svg>`
+  },
+  "Spagna": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#aa151b"/>
+      <rect y="50" width="300" height="100" fill="#f1bf00"/>
+    </svg>`
+  },
+  "Svizzera": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <rect width="32" height="32" fill="#d52b1e"/>
+      <rect x="13" y="4" width="6" height="24" fill="#ffffff"/>
+      <rect x="4" y="13" width="24" height="6" fill="#ffffff"/>
+    </svg>`
+  },
+  "Austria": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#ed2939"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+    </svg>`
+  },
+  "Grecia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 18">
+      <rect width="27" height="18" fill="#0d5eaf"/>
+      <rect y="0" width="27" height="2" fill="#ffffff"/>
+      <rect y="4" width="27" height="2" fill="#ffffff"/>
+      <rect y="8" width="27" height="2" fill="#ffffff"/>
+      <rect y="12" width="27" height="2" fill="#ffffff"/>
+      <rect y="16" width="27" height="2" fill="#ffffff"/>
+      <rect width="10" height="10" fill="#0d5eaf"/>
+      <rect x="4" y="0" width="2" height="10" fill="#ffffff"/>
+      <rect y="4" width="10" height="2" fill="#ffffff"/>
+    </svg>`
+  },
+  "Portogallo": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="120" height="200" fill="#006600"/>
+      <rect x="120" width="180" height="200" fill="#ff0000"/>
+      <circle cx="120" cy="100" r="35" fill="#ffff00" stroke="#ffffff" stroke-width="4"/>
+    </svg>`
+  },
+  "Belgio": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#000000"/>
+      <rect x="100" width="100" height="200" fill="#fae042"/>
+      <rect x="200" width="100" height="200" fill="#ef3340"/>
+    </svg>`
+  },
+  "Olanda": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#ae1c28"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+      <rect y="133" width="300" height="67" fill="#21468b"/>
+    </svg>`
+  },
+  "Polonia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+      <rect width="200" height="50" fill="#ffffff"/>
+      <rect y="50" width="200" height="50" fill="#dc143c"/>
+    </svg>`
+  },
+  "Svezia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 10">
+      <rect width="16" height="10" fill="#006aa7"/>
+      <rect x="5" width="2" height="10" fill="#fecc00"/>
+      <rect y="4" width="16" height="2" fill="#fecc00"/>
+    </svg>`
+  },
+  "Norvegia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16">
+      <rect width="22" height="16" fill="#ef2b2d"/>
+      <rect x="6" width="4" height="16" fill="#ffffff"/>
+      <rect y="6" width="22" height="4" fill="#ffffff"/>
+      <rect x="7" width="2" height="16" fill="#002868"/>
+      <rect y="7" width="22" height="2" fill="#002868"/>
+    </svg>`
+  },
+  "Danimarca": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 28">
+      <rect width="37" height="28" fill="#c60c30"/>
+      <rect x="12" width="5" height="28" fill="#ffffff"/>
+      <rect y="11.5" width="37" height="5" fill="#ffffff"/>
+    </svg>`
+  },
+  "Usa": {
+    continent: "Americhe 🌎",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19 10">
+      <rect width="19" height="10" fill="#b22234"/>
+      <rect y="0.77" width="19" height="0.77" fill="#ffffff"/>
+      <rect y="1.54" width="19" height="0.77" fill="#b22234"/>
+      <rect y="2.31" width="19" height="0.77" fill="#ffffff"/>
+      <rect y="3.08" width="19" height="0.77" fill="#b22234"/>
+      <rect y="3.85" width="19" height="0.77" fill="#ffffff"/>
+      <rect y="4.62" width="19" height="0.77" fill="#b22234"/>
+      <rect y="5.39" width="19" height="0.77" fill="#ffffff"/>
+      <rect y="6.16" width="19" height="0.77" fill="#b22234"/>
+      <rect y="6.93" width="19" height="0.77" fill="#ffffff"/>
+      <rect y="7.7" width="19" height="0.77" fill="#b22234"/>
+      <rect y="8.47" width="19" height="0.77" fill="#ffffff"/>
+      <rect y="9.23" width="19" height="0.77" fill="#b22234"/>
+      <rect width="7.6" height="5.39" fill="#3c3b6e"/>
+    </svg>`
+  },
+
+  // ── LIVELLO 2 ── Meno conosciuti
+  "Brasile": {
+    continent: "Americhe 🌎",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14">
+      <rect width="20" height="14" fill="#009c3b"/>
+      <polygon points="10,1 19,7 10,13 1,7" fill="#ffdf00"/>
+      <circle cx="10" cy="7" r="3.5" fill="#002776"/>
+    </svg>`
+  },
+  "Canada": {
+    continent: "Americhe 🌎",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200">
+      <rect width="100" height="200" fill="#ff0000"/>
+      <rect x="100" width="200" height="200" fill="#ffffff"/>
+      <rect x="300" width="100" height="200" fill="#ff0000"/>
+      <polygon points="200,30 215,70 255,70 225,95 235,135 200,110 165,135 175,95 145,70 185,70" fill="#ff0000"/>
+    </svg>`
+  },
+  "Giappone": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#ffffff"/>
+      <circle cx="150" cy="100" r="60" fill="#bc002d"/>
+    </svg>`
+  },
+  "Cina": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#de2910"/>
+      <polygon points="50,20 65,65 110,65 75,90 88,135 50,110 12,135 25,90 -10,65 35,65" fill="#ffde00"/>
+    </svg>`
+  },
+  "Australia": {
+    continent: "Oceania 🌊",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 250">
+      <rect width="500" height="250" fill="#012169"/>
+      <rect width="250" height="125" fill="#012169"/>
+      <line x1="0" y1="0" x2="250" y2="125" stroke="#ffffff" stroke-width="35"/>
+      <line x1="250" y1="0" x2="0" y2="125" stroke="#ffffff" stroke-width="35"/>
+      <line x1="0" y1="0" x2="250" y2="125" stroke="#cc0000" stroke-width="20"/>
+      <line x1="250" y1="0" x2="0" y2="125" stroke="#cc0000" stroke-width="20"/>
+      <line x1="125" y1="0" x2="125" y2="125" stroke="#ffffff" stroke-width="40"/>
+      <line x1="0" y1="62" x2="250" y2="62" stroke="#ffffff" stroke-width="40"/>
+      <line x1="125" y1="0" x2="125" y2="125" stroke="#cc0000" stroke-width="20"/>
+      <line x1="0" y1="62" x2="250" y2="62" stroke="#cc0000" stroke-width="20"/>
+    </svg>`
+  },
+  "Argentina": {
+    continent: "Americhe 🌎",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#74acdf"/>
+      <rect y="60" width="300" height="80" fill="#ffffff"/>
+      <circle cx="150" cy="100" r="20" fill="#f6b40e"/>
+    </svg>`
+  },
+  "Messico": {
+    continent: "Americhe 🌎",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#006847"/>
+      <rect x="100" width="100" height="200" fill="#ffffff"/>
+      <rect x="200" width="100" height="200" fill="#ce1126"/>
+      <circle cx="150" cy="100" r="22" fill="#8b4513" opacity="0.7"/>
+    </svg>`
+  },
+  "India": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#ff9933"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+      <rect y="133" width="300" height="67" fill="#138808"/>
+      <circle cx="150" cy="100" r="22" fill="none" stroke="#000080" stroke-width="4"/>
+    </svg>`
+  },
+  "Russia": {
+    continent: "Europa/Asia 🌍",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#ffffff"/>
+      <rect y="67" width="300" height="66" fill="#0039a6"/>
+      <rect y="133" width="300" height="67" fill="#d52b1e"/>
+    </svg>`
+  },
+  "Turchia": {
+    continent: "Europa/Asia 🌍",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">
+      <rect width="30" height="20" fill="#e30a17"/>
+      <circle cx="12" cy="10" r="5" fill="#ffffff"/>
+      <circle cx="13.5" cy="10" r="4" fill="#e30a17"/>
+      <polygon points="19,10 20.5,7.5 22.5,10 20.5,12.5" fill="#ffffff"/>
+    </svg>`
+  },
+  "Ungheria": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#ce2939"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+      <rect y="133" width="300" height="67" fill="#477050"/>
+    </svg>`
+  },
+  "Finlandia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 11">
+      <rect width="18" height="11" fill="#ffffff"/>
+      <rect x="5" width="3" height="11" fill="#003580"/>
+      <rect y="4" width="18" height="3" fill="#003580"/>
+    </svg>`
+  },
+  "Rep. Ceca": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="100" fill="#ffffff"/>
+      <rect y="100" width="300" height="100" fill="#d7141a"/>
+      <polygon points="0,0 120,100 0,200" fill="#11457e"/>
+    </svg>`
+  },
+  "Romania": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#002b7f"/>
+      <rect x="100" width="100" height="200" fill="#fcd116"/>
+      <rect x="200" width="100" height="200" fill="#ce1126"/>
+    </svg>`
+  },
+  "Croazia": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#ff0000"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+      <rect y="133" width="300" height="67" fill="#0000ff"/>
+      <rect x="110" y="50" width="80" height="100" fill="#ffffff" rx="5"/>
+      <rect x="115" y="55" width="15" height="15" fill="#ff0000"/>
+      <rect x="135" y="55" width="15" height="15" fill="#ffffff"/>
+      <rect x="155" y="55" width="15" height="15" fill="#ff0000"/>
+      <rect x="115" y="72" width="15" height="15" fill="#ffffff"/>
+      <rect x="135" y="72" width="15" height="15" fill="#ff0000"/>
+      <rect x="155" y="72" width="15" height="15" fill="#ffffff"/>
+    </svg>`
+  },
+
+  // ── LIVELLO 3 ── Difficili
+  "Islanda": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 18">
+      <rect width="25" height="18" fill="#003897"/>
+      <rect x="7" width="4" height="18" fill="#ffffff"/>
+      <rect y="7" width="25" height="4" fill="#ffffff"/>
+      <rect x="8" width="2" height="18" fill="#d72828"/>
+      <rect y="8" width="25" height="2" fill="#d72828"/>
+    </svg>`
+  },
+  "Georgia": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#ffffff"/>
+      <rect x="135" width="30" height="200" fill="#ff0000"/>
+      <rect y="85" width="300" height="30" fill="#ff0000"/>
+      <rect x="20" y="20" width="50" height="50" fill="none" stroke="#ff0000" stroke-width="6"/>
+      <rect x="230" y="20" width="50" height="50" fill="none" stroke="#ff0000" stroke-width="6"/>
+      <rect x="20" y="130" width="50" height="50" fill="none" stroke="#ff0000" stroke-width="6"/>
+      <rect x="230" y="130" width="50" height="50" fill="none" stroke="#ff0000" stroke-width="6"/>
+    </svg>`
+  },
+  "Mongolia": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#c4272f"/>
+      <rect x="100" width="100" height="200" fill="#015197"/>
+      <rect x="200" width="100" height="200" fill="#c4272f"/>
+      <circle cx="50" cy="60" r="15" fill="#f9bc31"/>
+      <rect x="35" y="85" width="30" height="8" fill="#f9bc31"/>
+      <rect x="35" y="105" width="30" height="8" fill="#f9bc31"/>
+      <rect x="35" y="125" width="30" height="30" fill="#f9bc31"/>
+    </svg>`
+  },
+  "Papua N.G.": {
+    continent: "Oceania 🌊",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+      <polygon points="0,0 400,0 0,300" fill="#000000"/>
+      <polygon points="400,0 400,300 0,300" fill="#ce1126"/>
+      <polygon points="70,30 85,80 135,80 95,110 110,160 70,130 30,160 45,110 5,80 55,80" fill="#fcd116"/>
+      <circle cx="300" cy="200" r="18" fill="#ffffff"/>
+      <circle cx="340" cy="140" r="13" fill="#ffffff"/>
+      <circle cx="260" cy="140" r="13" fill="#ffffff"/>
+      <circle cx="350" cy="220" r="10" fill="#ffffff"/>
+    </svg>`
+  },
+  "Tagikistan": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#cc0001"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+      <rect y="133" width="300" height="67" fill="#006600"/>
+      <rect x="110" y="65" width="80" height="70" fill="#ffd700" rx="5"/>
+    </svg>`
+  },
+  "Bhutan": {
+    continent: "Asia 🌏",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+      <polygon points="0,0 400,300 0,300" fill="#ff8000"/>
+      <polygon points="0,0 400,0 400,300" fill="#ff0000"/>
+      <ellipse cx="200" cy="150" rx="70" ry="70" fill="#ffffff" opacity="0.9"/>
+    </svg>`
+  },
+  "Lesotho": {
+    continent: "Africa 🌍",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="67" fill="#009543"/>
+      <rect y="67" width="300" height="66" fill="#ffffff"/>
+      <rect y="133" width="300" height="67" fill="#009543"/>
+      <rect x="135" y="25" width="30" height="150" fill="#000000"/>
+      <ellipse cx="150" cy="50" rx="35" ry="20" fill="#000000"/>
+    </svg>`
+  },
+  "Suriname": {
+    continent: "Americhe 🌎",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#377e3f"/>
+      <rect y="50" width="300" height="35" fill="#ffffff"/>
+      <rect y="115" width="300" height="35" fill="#ffffff"/>
+      <rect y="67" width="300" height="66" fill="#b40a2d"/>
+      <polygon points="150,76 162,110 198,110 170,130 180,164 150,144 120,164 130,130 102,110 138,110" fill="#ffd700"/>
+    </svg>`
+  },
+  "Capo Verde": {
+    continent: "Africa 🌍",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#003893"/>
+      <rect y="90" width="300" height="25" fill="#ffffff"/>
+      <rect y="120" width="300" height="12" fill="#cf2027"/>
+      <rect y="65" width="300" height="12" fill="#ffffff"/>
+    </svg>`
+  },
+  "Vanuatu": {
+    continent: "Oceania 🌊",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="100" fill="#009543"/>
+      <rect y="100" width="300" height="100" fill="#ce1126"/>
+      <polygon points="0,0 110,100 0,200" fill="#000000"/>
+      <line x1="10" y1="10" x2="100" y2="100" stroke="#ffd700" stroke-width="7"/>
+      <line x1="10" y1="190" x2="100" y2="100" stroke="#ffd700" stroke-width="7"/>
+    </svg>`
+  },
+  "Comore": {
+    continent: "Africa 🌍",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <polygon points="0,0 0,200 120,100" fill="#3a75c4"/>
+      <rect x="120" width="180" height="50" fill="#ffffff"/>
+      <rect x="120" y="50" width="180" height="50" fill="#ffc61e"/>
+      <rect x="120" y="100" width="180" height="50" fill="#ce1126"/>
+      <rect x="120" y="150" width="180" height="50" fill="#3a75c4"/>
+    </svg>`
+  },
+  "Moldova": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="100" height="200" fill="#003DA5"/>
+      <rect x="100" width="100" height="200" fill="#FFD100"/>
+      <rect x="200" width="100" height="200" fill="#C8102E"/>
+      <circle cx="150" cy="100" r="22" fill="#8B4513" opacity="0.8"/>
+    </svg>`
+  },
+  "Belarus": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="133" fill="#cf101a"/>
+      <rect y="133" width="300" height="67" fill="#009d40"/>
+      <rect width="35" height="200" fill="#ffffff"/>
+      <rect x="5" y="10" width="25" height="15" fill="#cf101a"/>
+      <rect x="5" y="35" width="25" height="15" fill="#cf101a"/>
+    </svg>`
+  },
+  "Kosovo": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="200" fill="#244AA5"/>
+      <polygon points="150,30 160,65 197,65 168,87 178,122 150,100 122,122 132,87 103,65 140,65" fill="#D4AF37"/>
+      <path d="M60,135 Q150,100 240,135" stroke="#D4AF37" stroke-width="6" fill="none"/>
+    </svg>`
+  },
+  "San Marino": {
+    continent: "Europa 🇪🇺",
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <rect width="300" height="100" fill="#5EB6E4"/>
+      <rect y="100" width="300" height="100" fill="#ffffff"/>
+      <circle cx="150" cy="100" r="35" fill="#7bbf42" stroke="#5EB6E4" stroke-width="5"/>
+    </svg>`
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// CONFIGURAZIONE LIVELLI
+// ════════════════════════════════════════════════════════
+const LEVELS = {
+  1: {
+    name: "Livello 1 – Facile",
+    countries: ["Italia","Francia","Germania","Spagna","Svizzera","Austria","Grecia",
+                "Portogallo","Belgio","Olanda","Polonia","Svezia","Norvegia","Danimarca","Usa"]
+  },
+  2: {
+    name: "Livello 2 – Medio",
+    countries: ["Brasile","Canada","Giappone","Cina","Australia","Argentina","Messico",
+                "India","Russia","Turchia","Ungheria","Finlandia","Rep. Ceca","Romania","Croazia"]
+  },
+  3: {
+    name: "Livello 3 – Difficile",
+    countries: ["Islanda","Georgia","Mongolia","Papua N.G.","Tagikistan","Bhutan","Lesotho",
+                "Suriname","Capo Verde","Vanuatu","Comore","Moldova","Belarus","Kosovo","San Marino"]
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// STATO GIOCO
+// ════════════════════════════════════════════════════════
+let state = {
+  level: 1, queue: [], current: null,
+  qIndex: 0, correct: 0, wrong: 0,
+  answered: false, results: []
+};
+
+// ════════════════════════════════════════════════════════
+// AUDIO
+// ════════════════════════════════════════════════════════
+function playSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.6);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.setValueAtTime(150, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════
+// PARTICELLE
+// ════════════════════════════════════════════════════════
+function spawnParticles(correct) {
+  const symbols = correct ? ['⭐','✨','🌟','💫','⭐'] : ['💥','😅','❌'];
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    p.style.left = (20 + Math.random() * 60) + 'vw';
+    p.style.top = (40 + Math.random() * 20) + 'vh';
+    p.style.animationDelay = (Math.random() * 0.4) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// NAVIGAZIONE SCHERMATE
+// ════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════
+// INIZIA GIOCO
+// ════════════════════════════════════════════════════════
+function startGame(level) {
+  state.level = level;
+  // Prende TUTTE le bandiere del livello, le mescola e ne sceglie 10 casuali
+  const allForLevel = shuffle([...LEVELS[level].countries]);
+  state.queue = allForLevel.slice(0, 10);
+  state.qIndex = 0; state.correct = 0; state.wrong = 0;
+  state.results = [];
+  buildStarsRow();
+  showScreen('quiz');
+  loadQuestion();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function buildStarsRow() {
+  const row = document.getElementById('stars-row');
+  row.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement('span');
+    s.className = 'star'; s.textContent = '⭐'; s.id = 'star-' + i;
+    s.style.opacity = '0.15';
+    row.appendChild(s);
+  }
+}
+
+function loadQuestion() {
+  state.answered = false;
+  const country = state.queue[state.qIndex];
+  state.current = country;
+  const data = FLAGS[country];
+
+  document.getElementById('q-num').textContent = state.qIndex + 1;
+  document.getElementById('q-level-badge').textContent = LEVELS[state.level].name;
+  document.getElementById('continent-badge').textContent = data.continent;
+  document.getElementById('flag-wrapper').innerHTML = data.svg;
+  document.getElementById('progress-fill').style.width = ((state.qIndex / 10) * 100) + '%';
+
+  document.getElementById('answer-panel').classList.remove('visible');
+  document.getElementById('reveal-btn').style.display = '';
+  document.getElementById('reveal-btn').disabled = false;
+}
+
+// ════════════════════════════════════════════════════════
+// MOSTRA RISPOSTA
+// ════════════════════════════════════════════════════════
+function revealAnswer() {
+  if (state.answered) return;
+  const country = state.current;
+  const data = FLAGS[country];
+  document.getElementById('country-name').textContent = country;
+  document.getElementById('country-extra').textContent = data.continent;
+  document.getElementById('answer-panel').classList.add('visible');
+  document.getElementById('reveal-btn').style.display = 'none';
+
+  // 🔊 Legge il nome della nazione ad alta voce
+  speakCountry(country);
+}
+
+function speakCountry(name) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel(); // ferma eventuale voce precedente
+    const utter = new SpeechSynthesisUtterance(name);
+    utter.lang = 'it-IT';
+    utter.volume = 0.85;  // volume medio
+    utter.rate = 0.85;    // un po' più lento, adatto ai bambini
+    utter.pitch = 1.1;
+
+    // Prova a trovare una voce italiana
+    const voices = window.speechSynthesis.getVoices();
+    const itVoice = voices.find(v => v.lang.startsWith('it'));
+    if (itVoice) utter.voice = itVoice;
+
+    window.speechSynthesis.speak(utter);
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════
+// GIUDIZIO SELF-ASSESSMENT
+// ════════════════════════════════════════════════════════
+function judge(correct) {
+  if (state.answered) return;
+  state.answered = true;
+
+  if (correct) {
+    state.correct++;
+    state.results.push('ok');
+    updateStar(state.qIndex, 'earned');
+    playSound('correct');
+    spawnParticles(true);
+    showFeedback(true);
+  } else {
+    state.wrong++;
+    state.results.push('ko');
+    updateStar(state.qIndex, 'missed');
+    playSound('wrong');
+    spawnParticles(false);
+    showFeedback(false);
+  }
+
+  setTimeout(() => {
+    hideFeedback();
+    state.qIndex++;
+    if (state.qIndex >= 10) {
+      showSummary();
+    } else {
+      loadQuestion();
+    }
+  }, 1400);
+}
+
+function updateStar(idx, cls) {
+  const s = document.getElementById('star-' + idx);
+  if (!s) return;
+  s.style.opacity = '1';
+  if (cls === 'earned') {
+    s.style.filter = 'drop-shadow(0 0 6px gold)';
+    s.textContent = '⭐';
+  } else {
+    s.style.filter = 'grayscale(1)';
+    s.style.opacity = '0.35';
+    s.textContent = '💔';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// FEEDBACK VISIVO
+// ════════════════════════════════════════════════════════
+function showFeedback(correct) {
+  const overlay = document.getElementById('feedback-overlay');
+  const emoji = document.getElementById('feedback-emoji');
+  const msg = document.getElementById('feedback-msg');
+  const positives = ['🎉 Bravissimo!','🌟 Ottimo!','🏆 Perfetto!','✨ Grande!','🎯 Esatto!'];
+  const negatives = ['😅 Peccato!','💪 La prossima!','🤔 Ci riproverai!','📚 Imparerai!'];
+  if (correct) {
+    emoji.textContent = ['🎉','⭐','🏆','🌟','✨'][Math.floor(Math.random()*5)];
+    msg.textContent = positives[Math.floor(Math.random()*positives.length)];
+    msg.style.color = '#4caf50';
+  } else {
+    emoji.textContent = ['😅','❌','💔','😮'][Math.floor(Math.random()*4)];
+    msg.textContent = negatives[Math.floor(Math.random()*negatives.length)];
+    msg.style.color = '#f44336';
+  }
+  overlay.classList.add('show');
+}
+function hideFeedback() {
+  document.getElementById('feedback-overlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════
+// RIEPILOGO FINALE
+// ════════════════════════════════════════════════════════
+function showSummary() {
+  const c = state.correct;
+  document.getElementById('sum-correct').textContent = c;
+  document.getElementById('sum-ok').textContent = c;
+  document.getElementById('sum-ko').textContent = state.wrong;
+
+  // stelle finali
+  const sf = document.getElementById('stars-final');
+  sf.innerHTML = '';
+  state.results.forEach(r => {
+    sf.innerHTML += r === 'ok' ? '⭐' : '<span style="opacity:0.3">💔</span>';
+  });
+
+  // messaggio incoraggiamento
+  let msg = '';
+  if (c === 10) msg = "🏆 Perfetto! Sei un campione delle bandiere! Nessuno ti batte!";
+  else if (c >= 8) msg = "🌟 Fantastico! Conosci davvero bene le bandiere! Vai avanti così!";
+  else if (c >= 6) msg = "👍 Ottimo lavoro! Ancora un po' di pratica e sarai imbattibile!";
+  else if (c >= 4) msg = "💪 Buon inizio! Ogni quiz ti renderà più forte. Non mollare!";
+  else if (c >= 2) msg = "📚 Stai imparando! Le bandiere sono tante, ma ce la farai!";
+  else msg = "🌍 Il mondo è grande! Continua ad esplorare e imparerai tutto!";
+
+  document.getElementById('encourage-msg').textContent = msg;
+  document.getElementById('progress-fill').style.width = '100%';
+  showScreen('summary');
+}
+
+function goHome() {
+  showScreen('home');
+}
+
+// Precarica le voci del sintetizzatore vocale (necessario su alcuni browser)
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>
