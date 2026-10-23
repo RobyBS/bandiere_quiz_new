@@ -1,4 +1,4 @@
-"""Genera gli STL del contenitore trapezoidale per Siporax (scatola + coperchio a pressione).
+"""Genera gli STL del contenitore esagonale (trapezio con angoli smussati) per Siporax (scatola + coperchio a pressione).
 
 Uso:  pip install trimesh manifold3d shapely  &&  python genera_stl.py
 Tutte le misure sono in mm: modificare i parametri qui sotto e rilanciare.
@@ -9,8 +9,8 @@ from shapely.ops import unary_union
 
 # --- Parametri ---------------------------------------------------------------
 LATO_LUNGO = 65.0       # base maggiore del trapezio
-LATO_CORTO = 12.0       # base minore (parallela)
-PROFONDITA = 26.5       # distanza tra le due basi (26.5 = lati obliqui a 45°)
+LATO_CORTO = 11.0       # i 3 lati corti: le due testate e la punta parallela al lato lungo
+PROFONDITA = 32.0       # dal lato lungo alla punta (stimata dalla foto dall'alto)
 ALTEZZA_TOT = 20.0      # scatola + coperchio chiuso
 PARETE = 0.8            # spessore pareti laterali (2 perimetri con ugello 0.4)
 FONDO = 1.0             # spessore fondo e piastra del coperchio
@@ -23,8 +23,8 @@ GIOCO = 0.15            # gioco per l'incastro (aumentare a 0.2-0.25 se troppo d
 
 # --- Geometria ---------------------------------------------------------------
 dx = (LATO_LUNGO - LATO_CORTO) / 2
-trapezio = Polygon([(0, 0), (LATO_LUNGO, 0),
-                    (LATO_LUNGO - dx, PROFONDITA), (dx, PROFONDITA)])
+trapezio = Polygon([(0, 0), (LATO_LUNGO, 0), (LATO_LUNGO, LATO_CORTO),
+                    (LATO_LUNGO - dx, PROFONDITA), (dx, PROFONDITA), (0, LATO_CORTO)])
 
 
 def inset(poly, d):
