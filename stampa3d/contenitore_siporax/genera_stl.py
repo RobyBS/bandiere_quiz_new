@@ -12,13 +12,13 @@ LATO_LUNGO = 65.0       # base maggiore del trapezio
 LATO_CORTO = 12.0       # base minore (parallela)
 PROFONDITA = 26.5       # distanza tra le due basi (26.5 = lati obliqui a 45°)
 ALTEZZA_TOT = 20.0      # scatola + coperchio chiuso
-PARETE = 1.6            # spessore pareti laterali
-FONDO = 1.6             # spessore fondo e piastra del coperchio
+PARETE = 0.8            # spessore pareti laterali (2 perimetri con ugello 0.4)
+FONDO = 1.0             # spessore fondo e piastra del coperchio
 FESSURA = 3.0           # larghezza feritoie (< 5 mm così il Siporax 8x5 non passa)
 BARRETTA = 2.0          # larghezza delle barrette tra le feritoie
-BORDO_PIENO = 3.6       # fascia piena perimetrale prima delle feritoie
+BORDO_PIENO = 2.2       # fascia piena perimetrale prima delle feritoie
 GONNA_H = 3.0           # altezza del bordino del coperchio che entra nella scatola
-GONNA_SP = 1.2          # spessore del bordino
+GONNA_SP = 0.8          # spessore del bordino
 GIOCO = 0.15            # gioco per l'incastro (aumentare a 0.2-0.25 se troppo duro)
 
 # --- Geometria ---------------------------------------------------------------
