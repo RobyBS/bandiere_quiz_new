@@ -10,7 +10,7 @@ from shapely.ops import unary_union
 # --- Parametri ---------------------------------------------------------------
 LATO_LUNGO = 65.0       # base maggiore del trapezio
 LATO_CORTO = 11.0       # i 3 lati corti: le due testate e la punta parallela al lato lungo
-PROFONDITA = 32.0       # dal lato lungo alla punta (stimata dalla foto dall'alto)
+PROFONDITA = 36.0       # dal lato lungo alla punta (misurata)
 ALTEZZA_TOT = 20.0      # scatola + coperchio chiuso
 PARETE = 0.8            # spessore pareti laterali (2 perimetri con ugello 0.4)
 FONDO = 1.0             # spessore fondo e piastra del coperchio
