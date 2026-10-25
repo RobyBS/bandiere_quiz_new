@@ -1,7 +1,7 @@
 """Coperchio sperimentale: piastra 2 mm, bordino 5 mm, testate allungate di 3 mm verso il lato lungo.
 
-Il bordino resta dimensionato per la scatola di genera_stl.py (contropezzo);
-la piastra sporge di 3 mm oltre il lato lungo, piena, senza feritoie.
+Il bordino segue il nuovo profilo esterno, rientrato come nel coperchio standard
+(parete + gioco), per un contropezzo anch'esso allungato di 3 mm.
 Uso:  pip install trimesh manifold3d shapely networkx lxml  &&  python coperchio_esperimento.py
 """
 import trimesh
@@ -10,10 +10,10 @@ from shapely.ops import unary_union
 
 LATO_LUNGO = 65.0
 LATO_CORTO = 11.0
-PROFONDITA = 36.0       # della scatola (contropezzo)
+PROFONDITA = 36.0       # profondità di partenza, prima dell'allungo
 ALLUNGO = 3.0           # testate allungate dalla parte del lato lungo: 11 -> 14
 PIASTRA = 2.0
-PARETE = 1.2            # parete della scatola su cui deve entrare il bordino
+PARETE = 1.2            # parete del contropezzo su cui deve entrare il bordino
 FESSURA = 3.0
 BARRETTA = 2.0
 BORDO_PIENO = 2.2
@@ -22,8 +22,6 @@ GONNA_SP = 0.8
 GIOCO = 0.15
 
 dx = (LATO_LUNGO - LATO_CORTO) / 2
-scatola = Polygon([(0, 0), (LATO_LUNGO, 0), (LATO_LUNGO, LATO_CORTO),
-                   (LATO_LUNGO - dx, PROFONDITA), (dx, PROFONDITA), (0, LATO_CORTO)])
 piastra = Polygon([(0, -ALLUNGO), (LATO_LUNGO, -ALLUNGO), (LATO_LUNGO, LATO_CORTO),
                    (LATO_LUNGO - dx, PROFONDITA), (dx, PROFONDITA), (0, LATO_CORTO)])
 
@@ -51,8 +49,8 @@ def estrudi(poly, h, z=0.0):
     return m
 
 
-lastra = estrudi(piastra.difference(griglia(inset(scatola, BORDO_PIENO))), PIASTRA)
-interno = inset(scatola, PARETE + GIOCO)
+lastra = estrudi(piastra.difference(griglia(inset(piastra, BORDO_PIENO))), PIASTRA)
+interno = inset(piastra, PARETE + GIOCO)
 gonna = estrudi(interno.difference(inset(interno, GONNA_SP)), GONNA_H, PIASTRA)
 coperchio = trimesh.boolean.union([lastra, gonna], engine="manifold")
 coperchio.apply_translation([0, ALLUNGO, 0])
