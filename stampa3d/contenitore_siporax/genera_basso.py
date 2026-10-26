@@ -2,7 +2,10 @@
 
 Coperchio con uno strato in più (1.4 mm) e incastro più stretto (gioco 0.10).
 Uso:  pip install trimesh manifold3d shapely networkx lxml  &&  python genera_basso.py
+      python genera_basso.py 5   -> solo la scatola, 5 mm più alta (stesso coperchio)
 """
+import sys
+
 import trimesh
 from shapely.geometry import Polygon, box
 from shapely.ops import unary_union
@@ -52,8 +55,10 @@ def estrudi(poly, h, z=0.0):
 
 fori = griglia(inset(profilo, BORDO_PIENO))
 
+EXTRA_H = float(sys.argv[1]) if len(sys.argv) > 1 else 0.0
+
 # Scatola
-h_scatola = ALTEZZA_TOT - PIASTRA
+h_scatola = ALTEZZA_TOT - PIASTRA + EXTRA_H
 esterno = estrudi(profilo, h_scatola)
 cavita = estrudi(inset(profilo, PARETE), h_scatola + 1 - FONDO, FONDO)
 scatola = trimesh.boolean.difference(
@@ -65,6 +70,17 @@ anello = interno.difference(inset(interno, GONNA_SP))
 coperchio = trimesh.boolean.union(
     [estrudi(profilo.difference(fori), PIASTRA), estrudi(anello, GONNA_H, PIASTRA)],
     engine="manifold")
+
+if EXTRA_H:
+    nome = f"scatola_basso_piu{EXTRA_H:g}mm"
+    assert scatola.is_watertight
+    scatola.export(f"{nome}.stl")
+    scena = trimesh.Scene()
+    scena.add_geometry(scatola, node_name="scatola", geom_name="scatola")
+    scena.export(f"{nome}.3mf")
+    vol = inset(profilo, PARETE).area * (h_scatola - FONDO) - anello.area * GONNA_H
+    print(f"{nome}.3mf  {scatola.extents.round(2)} mm, vano utile ~{vol / 1000:.1f} cm3")
+    sys.exit()
 
 for nome, m in (("scatola_basso", scatola), ("coperchio_basso", coperchio)):
     assert m.is_watertight, nome
