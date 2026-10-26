@@ -12,7 +12,8 @@ LATO_LUNGO = 65.0       # base maggiore del trapezio
 LATO_CORTO = 11.0       # punta parallela al lato lungo (larghezza)
 TESTATA = 13.0          # le due testate ai capi del lato lungo
 PROFONDITA = 38.0       # dal lato lungo alla punta
-ALTEZZA_TOT = 35.0      # scatola + coperchio chiuso
+VERSIONE = "v4"         # suffisso dei file generati
+ALTEZZA_TOT = 27.0      # scatola + coperchio chiuso
 PARETE = 1.2            # spessore pareti laterali (3 perimetri con ugello 0.4)
 FONDO = 1.2             # spessore fondo e piastra del coperchio
 FESSURA = 3.0           # larghezza feritoie (< 5 mm così il Siporax 8x5 non passa)
@@ -71,16 +72,16 @@ coperchio = trimesh.boolean.union([piastra_forata(FONDO), gonna], engine="manifo
 
 for nome, m in (("scatola", scatola), ("coperchio", coperchio)):
     assert m.is_watertight, nome
-    m.export(f"{nome}_v3.stl")
-    print(f"{nome}_v3.stl  {m.extents.round(2)} mm, volume {m.volume / 1000:.1f} cm3")
+    m.export(f"{nome}_{VERSIONE}.stl")
+    print(f"{nome}_{VERSIONE}.stl  {m.extents.round(2)} mm, volume {m.volume / 1000:.1f} cm3")
 
 # 3MF con i due pezzi affiancati sul piatto, già orientati per la stampa
 piatto = trimesh.Scene()
 piatto.add_geometry(scatola, node_name="scatola", geom_name="scatola")
 piatto.add_geometry(coperchio.copy().apply_translation([0, PROFONDITA + 8, 0]),
                     node_name="coperchio", geom_name="coperchio")
-piatto.export("contenitore_siporax_v3.3mf")
-print("contenitore_siporax_v3.3mf")
+piatto.export(f"contenitore_siporax_{VERSIONE}.3mf")
+print(f"contenitore_siporax_{VERSIONE}.3mf")
 
 cav = trimesh.boolean.intersection(
     [cavita, estrudi(box(-5, -5, 80, 50), h_scatola - FONDO, FONDO)], engine="manifold")
